@@ -1,7 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Text;
+using Api.Core.Database;
 using Api.Repositories;
+using LinqToDB.AspNet;
+using LinqToDB.AspNet.Logging;
+using LinqToDB.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -9,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using MySqlConnector;
 
 namespace Api {
   public class Startup {
@@ -21,7 +27,13 @@ namespace Api {
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services) {
 
+      DbProviderFactories.RegisterFactory("Main", MySqlConnectorFactory.Instance);
       services.AddSingleton<IUserRepository, UserRepository>();
+      services.AddLinqToDbContext<MainDataConnection>((provider, options) => {
+        options
+          .UseMySqlConnector(Configuration.GetConnectionString("Main"))
+          .UseDefaultLogging(provider);
+      });
 
       services.AddControllers();
       services.AddSwaggerGen(c => {

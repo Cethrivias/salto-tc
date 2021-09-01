@@ -1,0 +1,12 @@
+using Api.Models;
+using LinqToDB;
+using LinqToDB.Configuration;
+using LinqToDB.Data;
+
+namespace Api.Core.Database {
+  public class MainDataConnection : DataConnection {
+    public MainDataConnection(LinqToDbConnectionOptions<MainDataConnection> options) : base(options) { }
+
+    public ITable<User> Users => GetTable<User>();
+  }
+}

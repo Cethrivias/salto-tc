@@ -16,4 +16,4 @@ services:
       context: MySql
       dockerfile: Dockerfile
     ports:
-      - 33060:3306
+      - 3306:3306

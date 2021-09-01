@@ -11,8 +11,8 @@ namespace Api.Controllers {
   [Produces("application/json")]
   public class AuthController : ControllerBase {
     private JwtIssuer jwtIssuer;
-
     private IUserRepository userRepository;
+
     public AuthController(IUserRepository userRepository, IConfiguration configuration) {
       this.userRepository = userRepository;
       this.jwtIssuer = new(configuration);
