@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Text;
+using Api.Core;
 using Api.Core.Database;
 using Api.Repositories;
 using LinqToDB.AspNet;
@@ -28,11 +29,17 @@ namespace Api {
     public void ConfigureServices(IServiceCollection services) {
 
       DbProviderFactories.RegisterFactory("Main", MySqlConnectorFactory.Instance);
-      services.AddSingleton<IUserRepository, UserRepository>();
       services.AddLinqToDbContext<MainDataConnection>((provider, options) => {
         options
           .UseMySqlConnector(Configuration.GetConnectionString("Main"))
           .UseDefaultLogging(provider);
+      });
+
+      services.AddSingleton<IJwtIssuer, JwtIssuer>();
+      services.AddSingleton<IUserRepository, UserRepository>(provider => {
+        var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetService<MainDataConnection>();
+        return new UserRepository(db);
       });
 
       services.AddControllers();

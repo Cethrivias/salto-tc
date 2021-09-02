@@ -1,11 +1,11 @@
 SET FOREIGN_KEY_CHECKS=0;
 
 CREATE TABLE users (
-  iq int(10) unsigned NOT NULL AUTO_INCREMENT,
+  id int(10) unsigned NOT NULL AUTO_INCREMENT,
   username varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   password varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   tag_id int(10) unsigned DEFAULT NULL,
-  PRIMARY KEY (iq),
+  PRIMARY KEY (id),
   UNIQUE KEY users_UN (username),
   KEY users_FK (tag_id),
   CONSTRAINT users_FK FOREIGN KEY (tag_id) REFERENCES tags (id) ON DELETE SET NULL ON UPDATE CASCADE
@@ -47,7 +47,7 @@ COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO tags (id, name) VALUES(1, 'Guest tag 1'), (2, 'Employee tag 1');
 
-INSERT INTO users (iq, username, password, tag_id) VALUES(1, 'Guest 1', '12345', 1), (2, 'Employee 1', '54321', 2);
+INSERT INTO users (id, username, password, tag_id) VALUES(1, 'Guest 1', '12345', 1), (2, 'Employee 1', '54321', 2);
 
 INSERT INTO locks (id, name) VALUES(1, 'Tunnel'), (2, 'Office');
 

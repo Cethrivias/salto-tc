@@ -8,7 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Api.Core {
-  public class JwtIssuer {
+  public class JwtIssuer : IJwtIssuer {
     private JwtHeader jwtHeader;
 
     public JwtIssuer(IConfiguration configuration) {

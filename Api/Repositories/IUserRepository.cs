@@ -1,8 +1,9 @@
+using System.Threading.Tasks;
 using Api.Models;
 using Api.Models.Dtos;
 
 namespace Api.Repositories {
   public interface IUserRepository {
-    User GetByCredentials(LoginRequestDto user);
+    Task<User> GetByCredentials(LoginRequestDto user);
   }
 }

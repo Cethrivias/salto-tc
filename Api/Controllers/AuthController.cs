@@ -1,29 +1,29 @@
+using System.Threading.Tasks;
 using Api.Core;
 using Api.Models.Dtos;
 using Api.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 
 namespace Api.Controllers {
   [ApiController]
   [Route("api/auth")]
   [Produces("application/json")]
   public class AuthController : ControllerBase {
-    private JwtIssuer jwtIssuer;
+    private IJwtIssuer jwtIssuer;
     private IUserRepository userRepository;
 
-    public AuthController(IUserRepository userRepository, IConfiguration configuration) {
+    public AuthController(IUserRepository userRepository, IJwtIssuer jwtIssuer) {
       this.userRepository = userRepository;
-      this.jwtIssuer = new(configuration);
+      this.jwtIssuer = jwtIssuer;
     }
 
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public ActionResult<LoginResponseDto> Login([FromBody] LoginRequestDto credentials) {
-      var user = userRepository.GetByCredentials(credentials);
+    public async Task<ActionResult<LoginResponseDto>> Login([FromBody] LoginRequestDto credentials) {
+      var user = await userRepository.GetByCredentials(credentials);
 
       if (user is null) {
         return Unauthorized();

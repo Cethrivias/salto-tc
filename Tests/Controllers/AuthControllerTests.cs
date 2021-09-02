@@ -1,5 +1,6 @@
-using System;
+using System.Threading.Tasks;
 using Api.Controllers;
+using Api.Core;
 using Api.Models;
 using Api.Models.Dtos;
 using Api.Repositories;
@@ -10,24 +11,26 @@ using Xunit;
 namespace Tests.Controllers {
   public class AuthControllerTests {
     [Fact]
-    public void Login_WithInvalidCredentials_Returns401() {
+    public async Task Login_WithInvalidCredentials_Returns401() {
       var credentials = new LoginRequestDto {
         Password = "test",
         Username = "test",
       };
 
       var repoMock = new Mock<IUserRepository>();
-      repoMock.Setup(repo => repo.GetByCredentials(It.IsAny<LoginRequestDto>())).Returns((User)null);
+      var jwtIssuer = new Mock<IJwtIssuer>();
 
-      var controller = new AuthController(repoMock.Object);
+      repoMock.Setup(repo => repo.GetByCredentials(It.IsAny<LoginRequestDto>())).ReturnsAsync((User)null);
 
-      var result = controller.Login(credentials);
+      var controller = new AuthController(repoMock.Object, jwtIssuer.Object);
+
+      var result = await controller.Login(credentials);
 
       Assert.IsType<UnauthorizedResult>(result.Result);
     }
 
     [Fact]
-    public void Login_WithValidCredentials_ReturnsLoginResponseDto() {
+    public async Task Login_WithValidCredentials_ReturnsLoginResponseDto() {
       var credentials = new LoginRequestDto {
         Password = "test",
         Username = "test",
@@ -39,11 +42,13 @@ namespace Tests.Controllers {
       };
 
       var repoMock = new Mock<IUserRepository>();
-      repoMock.Setup(repo => repo.GetByCredentials(credentials)).Returns(user);
+      var jwtIssuer = new Mock<IJwtIssuer>();
 
-      var controller = new AuthController(repoMock.Object);
+      repoMock.Setup(repo => repo.GetByCredentials(credentials)).ReturnsAsync(user);
 
-      var result = controller.Login(credentials);
+      var controller = new AuthController(repoMock.Object, jwtIssuer.Object);
+
+      var result = await controller.Login(credentials);
 
       Assert.IsType<LoginResponseDto>(result.Value);
     }
