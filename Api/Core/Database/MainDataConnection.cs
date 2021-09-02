@@ -8,5 +8,8 @@ namespace Api.Core.Database {
     public MainDataConnection(LinqToDbConnectionOptions<MainDataConnection> options) : base(options) { }
 
     public ITable<User> Users => GetTable<User>();
+    public ITable<Tag> Tags => GetTable<Tag>();
+    public ITable<Lock> Locks => GetTable<Lock>();
+    public ITable<Access> Access => GetTable<Access>();
   }
 }

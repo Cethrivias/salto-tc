@@ -21,5 +21,17 @@ namespace Api.Repositories {
 
       return query.FirstOrDefaultAsync();
     }
+
+    public async Task<bool> HasAccess(int userId, int lockId) {
+      var query = from users in db.Users
+                  join tags in db.Tags on users.TagId equals tags.Id
+                  join access in db.Access on tags.Id equals access.TagId
+                  join locks in db.Locks on access.LockId equals locks.Id
+                  where users.Id == userId && locks.Id == lockId
+                  select locks;
+      var result = await query.CountAsync();
+
+      return result != 0;
+    }
   }
 }
