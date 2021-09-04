@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Text;
+using Api.Core;
 using Api.Libs.Database;
 using Api.Repositories;
 using Api.Utils;
@@ -58,6 +59,9 @@ namespace Api {
       // Utils
       services.AddSingleton<IJwtIssuer, JwtIssuer>();
       services.AddSingleton<IUserProvider, UserProvider>();
+
+      // Core
+      services.AddSingleton<ILockOpener, LockOpener>();
 
       services.AddControllers();
 

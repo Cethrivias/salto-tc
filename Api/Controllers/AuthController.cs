@@ -20,7 +20,6 @@ namespace Api.Controllers {
 
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<LoginResponseDto>> Login([FromBody] LoginRequestDto credentials) {
       var user = await userRepository.GetByCredentials(credentials);

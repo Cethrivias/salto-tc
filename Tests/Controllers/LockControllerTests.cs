@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Api.Controllers;
+using Api.Core;
 using Api.Models;
 using Api.Models.Dtos;
 using Api.Repositories;
@@ -15,6 +16,7 @@ namespace Tests.Controllers {
   public class LockControllerTests {
     [Fact]
     public async void Get_ReturnsListOfLocks() {
+      var lockOpenerMock = new Mock<ILockOpener>();
       var lockRepoMock = new Mock<ILockRepository>();
       var userRepoMock = new Mock<IUserRepository>();
       var userAccessLogRepoMock = new Mock<IUserAccessLogRepository>();
@@ -29,6 +31,7 @@ namespace Tests.Controllers {
       userProviderMock.Setup(provider => provider.UserId).Returns(1);
 
       var lockController = new LockController(
+        lockOpenerMock.Object,
         lockRepoMock.Object,
         userRepoMock.Object,
         userAccessLogRepoMock.Object,
@@ -43,6 +46,7 @@ namespace Tests.Controllers {
 
     [Fact]
     public async void GetById_WhenUserHasAccess_ReturnsLock() {
+      var lockOpenerMock = new Mock<ILockOpener>();
       var lockRepoMock = new Mock<ILockRepository>();
       var userRepoMock = new Mock<IUserRepository>();
       var userAccessLogRepoMock = new Mock<IUserAccessLogRepository>();
@@ -59,6 +63,7 @@ namespace Tests.Controllers {
       userProviderMock.Setup(provider => provider.UserId).Returns(1);
 
       var lockController = new LockController(
+        lockOpenerMock.Object,
         lockRepoMock.Object,
         userRepoMock.Object,
         userAccessLogRepoMock.Object,
@@ -73,6 +78,7 @@ namespace Tests.Controllers {
 
     [Fact]
     public async void GetById_WhenUserDoesNotHaveAccess_Returns403() {
+      var lockOpenerMock = new Mock<ILockOpener>();
       var lockRepoMock = new Mock<ILockRepository>();
       var userRepoMock = new Mock<IUserRepository>();
       var userAccessLogRepoMock = new Mock<IUserAccessLogRepository>();
@@ -84,6 +90,7 @@ namespace Tests.Controllers {
       userProviderMock.Setup(provider => provider.UserId).Returns(1);
 
       var lockController = new LockController(
+        lockOpenerMock.Object,
         lockRepoMock.Object,
         userRepoMock.Object,
         userAccessLogRepoMock.Object,
@@ -97,6 +104,7 @@ namespace Tests.Controllers {
 
     [Fact]
     public async void Open_WhenUserHasAccess_OpensLock() {
+      var lockOpenerMock = new Mock<ILockOpener>();
       var lockRepoMock = new Mock<ILockRepository>();
       var userRepoMock = new Mock<IUserRepository>();
       var userAccessLogRepoMock = new Mock<IUserAccessLogRepository>();
@@ -121,6 +129,7 @@ namespace Tests.Controllers {
       userProviderMock.Setup(provider => provider.UserId).Returns(userAccessLog.UserId);
 
       var lockController = new LockController(
+        lockOpenerMock.Object,
         lockRepoMock.Object,
         userRepoMock.Object,
         userAccessLogRepoMock.Object,
@@ -136,6 +145,7 @@ namespace Tests.Controllers {
 
     [Fact]
     public async void Open_WhenUserDoesNotHaveAccess_Returns403() {
+      var lockOpenerMock = new Mock<ILockOpener>();
       var lockRepoMock = new Mock<ILockRepository>();
       var userRepoMock = new Mock<IUserRepository>();
       var userAccessLogRepoMock = new Mock<IUserAccessLogRepository>();
@@ -156,6 +166,7 @@ namespace Tests.Controllers {
       userProviderMock.Setup(provider => provider.UserId).Returns(userAccessLog.UserId);
 
       var lockController = new LockController(
+        lockOpenerMock.Object,
         lockRepoMock.Object,
         userRepoMock.Object,
         userAccessLogRepoMock.Object,

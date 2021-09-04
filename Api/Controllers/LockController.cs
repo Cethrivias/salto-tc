@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Api.Core;
 using Api.Models.Dtos;
 using Api.Repositories;
 using Api.Utils;
@@ -18,10 +19,12 @@ namespace Api.Controllers {
   public class LockController : ControllerBase {
     private readonly IUserRepository userRepository;
     private readonly IUserAccessLogRepository userAccessLogRepository;
+    private readonly ILockOpener lockOpener;
     private readonly ILockRepository lockRepository;
     private readonly IUserProvider userProvider;
 
     public LockController(
+      ILockOpener lockOpener,
       ILockRepository lockRepository,
       IUserRepository userRepository,
       IUserAccessLogRepository userAccessLogRepository,
@@ -29,6 +32,7 @@ namespace Api.Controllers {
     ) {
       this.userRepository = userRepository;
       this.userAccessLogRepository = userAccessLogRepository;
+      this.lockOpener = lockOpener;
       this.lockRepository = lockRepository;
       this.userProvider = userProvider;
     }
@@ -66,6 +70,7 @@ namespace Api.Controllers {
       var hasAccess = await userRepository.HasAccess(userId, lockId);
 
       if (hasAccess) {
+        await lockOpener.Open(lockId);
         var userAccessLog = await userAccessLogRepository.LogUserAccess(userId, lockId);
         return Ok(userAccessLog.ToUserAccessLogDto());
       } else {
