@@ -1,9 +1,15 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace Api.Models.Dtos {
+  public class LockDto {
+    [Required] public int Id { get; set; }
+    [Required] public string Name { get; set; }
+  }
+
   public class LoginRequestDto {
     private string _password;
 
@@ -25,6 +31,7 @@ namespace Api.Models.Dtos {
       }
     }
   }
+
   public class LoginResponseDto {
     public LoginResponseDto(string Token) {
       this.Token = Token;
@@ -32,12 +39,18 @@ namespace Api.Models.Dtos {
     [Required] public string Token { get; set; }
   }
 
-  public class PaginatedAccessLogResponseDto : PaginatedResponseDto<UserAccessLog> { }
+  public class PaginatedAccessLogsDto : PaginatedResponseDto<UserAccessLogDto> { }
 
   public class PaginatedResponseDto<T> {
     [Required] public int count => data.Count;
     [Required] public List<T> data { get; set; }
     [Required] public int pages { get; set; }
     [Required] public int page { get; set; }
+  }
+
+  public class UserAccessLogDto {
+    [Required] public int Id { get; set; }
+    [Required] public int LockId { get; set; }
+    [Required] public DateTimeOffset CreatedAt { get; set; }
   }
 }

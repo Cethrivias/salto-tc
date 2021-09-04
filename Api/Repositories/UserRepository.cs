@@ -14,9 +14,9 @@ namespace Api.Repositories {
       this.db = db;
     }
 
-    public Task<User> GetByCredentials(LoginRequestDto user) {
+    public Task<User> GetByCredentials(LoginRequestDto credentials) {
       var query = from users in db.Users
-                  where users.Username == user.Username && users.Password == user.Password
+                  where users.Username == credentials.Username && users.Password == credentials.Password
                   select users;
 
       return query.FirstOrDefaultAsync();

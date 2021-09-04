@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Api.Models.Dtos;
 using Api.Repositories;
@@ -20,7 +21,7 @@ namespace Api.Controllers {
     }
 
     [HttpGet]
-    public async Task<ActionResult<PaginatedAccessLogResponseDto>> Get(
+    public async Task<ActionResult<PaginatedAccessLogsDto>> Get(
       [FromQuery] int page = 1,
       [FromQuery(Name = "from")] DateTimeOffset? createdAtFrom = null,
       [FromQuery(Name = "to")] DateTimeOffset? createdAtTo = null,
@@ -31,8 +32,8 @@ namespace Api.Controllers {
       var logs = await userAccessLogRepository.GetUserAccessLogs(userId, page, createdAtFrom, createdAtTo, lockId);
       var pages = await userAccessLogRepository.GetUserAccessLogsPages(userId, createdAtFrom, createdAtTo, lockId);
 
-      var response = new PaginatedAccessLogResponseDto {
-        data = logs,
+      var response = new PaginatedAccessLogsDto {
+        data = logs.Select(it => it.ToUserAccessLogDto()).ToList(),
         page = page,
         pages = pages
       };

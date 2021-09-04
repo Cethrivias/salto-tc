@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Api.Models;
+using Api.Models.Dtos;
 using Api.Repositories;
 using Api.Utils.Extentions;
 using Microsoft.AspNetCore.Authorization;
@@ -26,18 +28,18 @@ namespace Api.Controllers {
 
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult<List<Lock>>> Get() {
+    public async Task<ActionResult<List<LockDto>>> Get() {
       var userId = HttpContext.GetUserId();
 
       var locks = await lockRepository.GetAccessibleByUser(userId);
 
-      return Ok(locks);
+      return Ok(locks.Select(it => it.ToLockDto()));
     }
 
     [HttpGet("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<Lock>> GetById([FromRoute(Name = "id")] int lockId) {
+    public async Task<ActionResult<LockDto>> GetById([FromRoute(Name = "id")] int lockId) {
       var userId = HttpContext.GetUserId();
 
       var item = await lockRepository.GetAccessibleByUser(userId, lockId);
@@ -45,20 +47,20 @@ namespace Api.Controllers {
         return Forbid();
       }
 
-      return Ok(item);
+      return Ok(item.ToLockDto());
     }
 
     [HttpGet("{id}/open")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<UserAccessLog>> Open([FromRoute(Name = "id")] int lockId) {
+    public async Task<ActionResult<UserAccessLogDto>> Open([FromRoute(Name = "id")] int lockId) {
       var userId = HttpContext.GetUserId();
 
       var hasAccess = await userRepository.HasAccess(userId, lockId);
 
       if (hasAccess) {
         var userAccessLog = await userAccessLogRepository.LogUserAccess(userId, lockId);
-        return Ok(userAccessLog);
+        return Ok(userAccessLog.ToUserAccessLogDto());
       } else {
         return Forbid();
       }
