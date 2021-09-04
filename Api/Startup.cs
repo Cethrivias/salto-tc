@@ -5,6 +5,7 @@ using System.Text;
 using Api.Core;
 using Api.Core.Database;
 using Api.Repositories;
+using Api.Utils;
 using LinqToDB.AspNet;
 using LinqToDB.AspNet.Logging;
 using LinqToDB.Configuration;
@@ -27,6 +28,8 @@ namespace Api {
 
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services) {
+
+      services.AddHttpContextAccessor();
 
       // Database
       DbProviderFactories.RegisterFactory("Main", MySqlConnectorFactory.Instance);
@@ -55,6 +58,7 @@ namespace Api {
 
       // Utils
       services.AddSingleton<IJwtIssuer, JwtIssuer>();
+      services.AddSingleton<IUserProvider, UserProvider>();
 
       services.AddControllers();
 

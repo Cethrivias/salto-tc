@@ -4,8 +4,10 @@ using Api.Core;
 using Api.Models;
 using Api.Models.Dtos;
 using Api.Repositories;
+using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using Tests.Extensions;
 using Xunit;
 
 namespace Tests.Controllers {
@@ -24,9 +26,9 @@ namespace Tests.Controllers {
 
       var controller = new AuthController(repoMock.Object, jwtIssuer.Object);
 
-      var result = await controller.Login(credentials);
+      var response = await controller.Login(credentials);
 
-      Assert.IsType<UnauthorizedResult>(result.Result);
+      response.Result.Should().BeOfType<UnauthorizedResult>();
     }
 
     [Fact]
@@ -48,9 +50,11 @@ namespace Tests.Controllers {
 
       var controller = new AuthController(repoMock.Object, jwtIssuer.Object);
 
-      var result = await controller.Login(credentials);
+      var response = await controller.Login(credentials);
 
-      Assert.IsType<LoginResponseDto>(result.Value);
+      response.Result.Should().BeOfType<OkObjectResult>();
+      var value = response.GetObjectResult();
+      value.Should().BeOfType<LoginResponseDto>();
     }
   }
 }

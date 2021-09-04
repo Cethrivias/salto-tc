@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 using Api.Core;
 using Api.Models.Dtos;
@@ -33,7 +32,7 @@ namespace Api.Controllers {
       var token = jwtIssuer.WriteToken(user);
       var response = new LoginResponseDto(token);
 
-      return response;
+      return Ok(response);
     }
   }
 }
