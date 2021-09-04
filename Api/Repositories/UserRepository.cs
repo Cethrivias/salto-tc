@@ -1,6 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
-using Api.Core.Database;
+using Api.Libs.Database;
 using Api.Models;
 using Api.Models.Dtos;
 using LinqToDB;

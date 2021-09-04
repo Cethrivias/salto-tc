@@ -1,6 +1,6 @@
 using Api.Models;
 
-namespace Api.Core {
+namespace Api.Utils {
   public interface IJwtIssuer {
     string WriteToken(User user);
   }

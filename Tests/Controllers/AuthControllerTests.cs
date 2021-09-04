@@ -1,9 +1,9 @@
 using System.Threading.Tasks;
 using Api.Controllers;
-using Api.Core;
 using Api.Models;
 using Api.Models.Dtos;
 using Api.Repositories;
+using Api.Utils;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Moq;

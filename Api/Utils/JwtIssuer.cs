@@ -7,7 +7,7 @@ using Api.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Api.Core {
+namespace Api.Utils {
   public class JwtIssuer : IJwtIssuer {
     private JwtHeader jwtHeader;
 
