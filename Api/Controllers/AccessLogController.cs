@@ -1,10 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Security.Claims;
 using System.Threading.Tasks;
-using Api.Models;
 using Api.Models.Dtos;
 using Api.Repositories;
+using Api.Utils.Extentions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,8 +26,7 @@ namespace Api.Controllers {
       [FromQuery(Name = "to")] DateTimeOffset? createdAtTo = null,
       [FromQuery] int? lockId = null
     ) {
-      var nameIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
-      var userId = Int32.Parse(nameIdentifier);
+      var userId = HttpContext.GetUserId();
 
       var logs = await userAccessLogRepository.GetUserAccessLogs(userId, page, createdAtFrom, createdAtTo, lockId);
       var pages = await userAccessLogRepository.GetUserAccessLogsPages(userId, createdAtFrom, createdAtTo, lockId);

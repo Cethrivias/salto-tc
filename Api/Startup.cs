@@ -37,15 +37,20 @@ namespace Api {
       });
 
       // Repositories
-      services.AddSingleton<IUserRepository, UserRepository>(provider => {
+      services.AddSingleton<ILockRepository, LockRepository>(provider => {
         var scope = provider.CreateScope();
         var db = scope.ServiceProvider.GetService<MainDataConnection>();
-        return new UserRepository(db);
+        return new LockRepository(db);
       });
       services.AddSingleton<IUserAccessLogRepository, UserAccessLogRepository>(provider => {
         var scope = provider.CreateScope();
         var db = scope.ServiceProvider.GetService<MainDataConnection>();
         return new UserAccessLogRepository(db);
+      });
+      services.AddSingleton<IUserRepository, UserRepository>(provider => {
+        var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetService<MainDataConnection>();
+        return new UserRepository(db);
       });
 
       // Utils
