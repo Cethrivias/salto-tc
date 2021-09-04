@@ -45,6 +45,18 @@ ENGINE=InnoDB
 DEFAULT CHARSET=utf8mb4
 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE users_access_logs (
+  id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  user_id int(10) unsigned NOT NULL,
+  lock_id int(10) unsigned NOT NULL,
+  created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY access_history_users_FK (user_id),
+  KEY access_history_locks_FK (lock_id),
+  CONSTRAINT access_history_locks_FK FOREIGN KEY (lock_id) REFERENCES locks (id),
+  CONSTRAINT access_history_users_FK FOREIGN KEY (user_id) REFERENCES users (id)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT INTO tags (id, name) VALUES(1, 'Guest tag 1'), (2, 'Employee tag 1');
 
 INSERT INTO users (id, username, password, tag_id) VALUES(1, 'Guest 1', '12345', 1), (2, 'Employee 1', '54321', 2);

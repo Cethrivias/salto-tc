@@ -28,6 +28,7 @@ namespace Api {
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services) {
 
+      // Database
       DbProviderFactories.RegisterFactory("Main", MySqlConnectorFactory.Instance);
       services.AddLinqToDbContext<MainDataConnection>((provider, options) => {
         options
@@ -35,14 +36,24 @@ namespace Api {
           .UseDefaultLogging(provider);
       });
 
-      services.AddSingleton<IJwtIssuer, JwtIssuer>();
+      // Repositories
       services.AddSingleton<IUserRepository, UserRepository>(provider => {
         var scope = provider.CreateScope();
         var db = scope.ServiceProvider.GetService<MainDataConnection>();
         return new UserRepository(db);
       });
+      services.AddSingleton<IUserAccessLogRepository, UserAccessLogRepository>(provider => {
+        var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetService<MainDataConnection>();
+        return new UserAccessLogRepository(db);
+      });
+
+      // Utils
+      services.AddSingleton<IJwtIssuer, JwtIssuer>();
 
       services.AddControllers();
+
+      // Swagger
       services.AddSwaggerGen(c => {
         c.SwaggerDoc("v1", new OpenApiInfo { Title = "Api", Version = "v1" });
         c.AddSecurityDefinition("JwtBearer", new OpenApiSecurityScheme {
@@ -69,6 +80,8 @@ namespace Api {
           }
         });
       });
+
+      // Auth
       services.AddAuthentication(options => {
         options.DefaultAuthenticateScheme = "JwtBearer";
         options.DefaultChallengeScheme = "JwtBearer";
@@ -83,7 +96,6 @@ namespace Api {
           ValidateLifetime = true,
           ClockSkew = TimeSpan.FromMinutes(5),
         };
-
       });
     }
 
