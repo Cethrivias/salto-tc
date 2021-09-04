@@ -22,12 +22,17 @@ namespace Api.Controllers {
     }
 
     [HttpGet]
-    public async Task<ActionResult<PaginatedAccessLogResponseDto>> Get([FromQuery] int page = 1) {
+    public async Task<ActionResult<PaginatedAccessLogResponseDto>> Get(
+      [FromQuery] int page = 1,
+      [FromQuery(Name = "from")] DateTimeOffset? createdAtFrom = null,
+      [FromQuery(Name = "to")] DateTimeOffset? createdAtTo = null,
+      [FromQuery] int? lockId = null
+    ) {
       var nameIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
       var userId = Int32.Parse(nameIdentifier);
 
-      var logs = await userAccessLogRepository.GetUserAccessLogs(userId, page);
-      var pages = await userAccessLogRepository.GetUserAccessLogsPages(userId);
+      var logs = await userAccessLogRepository.GetUserAccessLogs(userId, page, createdAtFrom, createdAtTo, lockId);
+      var pages = await userAccessLogRepository.GetUserAccessLogsPages(userId, createdAtFrom, createdAtTo, lockId);
 
       var response = new PaginatedAccessLogResponseDto {
         data = logs,
