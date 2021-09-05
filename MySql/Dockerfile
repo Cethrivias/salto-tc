@@ -1,6 +1,8 @@
 FROM mysql:5.7
 ENV MYSQL_ROOT_PASSWORD=testdbpass
 ENV MYSQL_DATABASE=salto
+ENV MYSQL_USER=saltouser
+ENV MYSQL_PASSWORD=saltopass
 
 COPY ./init/ /docker-entrypoint-initdb.d/
 
