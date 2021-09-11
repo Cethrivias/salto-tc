@@ -4,8 +4,8 @@ namespace Api.Models {
   [Table(Name = "locks")]
   public class Lock {
     [PrimaryKey, Identity, Column(Name = "id")]
-    public int Id { get; init; }
+    public int Id { get; set; }
     [Column(Name = "name"), NotNull]
-    public string Name { get; init; }
+    public string Name { get; set; }
   }
 }
