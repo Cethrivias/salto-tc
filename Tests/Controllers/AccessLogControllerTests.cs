@@ -43,9 +43,9 @@ namespace Tests.Controllers {
       response.Result.Should().BeOfType<OkObjectResult>();
       var value = response.GetObjectResult();
       var expected = new PaginatedAccessLogsDto {
-        data = new List<UserAccessLogDto> { userAccessLog.ToUserAccessLogDto() },
-        page = 1,
-        pages = pages
+        Data = new List<UserAccessLogDto> { userAccessLog.ToUserAccessLogDto() },
+        Page = 1,
+        Pages = pages
       };
       value.Should().BeEquivalentTo(expected);
     }

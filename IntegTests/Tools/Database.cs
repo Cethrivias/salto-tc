@@ -4,11 +4,11 @@ using Microsoft.Extensions.Configuration;
 
 namespace IntegTests.Tools {
   public static class Database {
-    private static readonly object _lock = new();
+    private static readonly object Lock = new();
     private static LinqToDbConnectionOptions options;
 
     public static MainDataConnection GetConnection() {
-      lock (_lock) {
+      lock (Lock) {
         if (options is null) {
           var connectionString = Config.GetInstance().GetConnectionString("Main");
           options = new LinqToDbConnectionOptionsBuilder().UseMySqlConnector(connectionString).Build();

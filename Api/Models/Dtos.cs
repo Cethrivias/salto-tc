@@ -11,13 +11,13 @@ namespace Api.Models.Dtos {
   }
 
   public class LoginRequestDto {
-    private string _password;
+    private string password;
 
     [Required]
     public string Username { get; set; }
     [Required]
     public string Password {
-      get => _password;
+      get => password;
       set {
         var bytes = Encoding.ASCII.GetBytes(value);
         var hash = new SHA256Managed().ComputeHash(bytes);
@@ -27,14 +27,14 @@ namespace Api.Models.Dtos {
           hex.Append(hash[i].ToString("x2"));
         }
 
-        _password = hex.ToString();
+        password = hex.ToString();
       }
     }
   }
 
   public class LoginResponseDto {
-    public LoginResponseDto(string Token) {
-      this.Token = Token;
+    public LoginResponseDto(string token) {
+      this.Token = token;
     }
     [Required] public string Token { get; set; }
   }
@@ -42,10 +42,10 @@ namespace Api.Models.Dtos {
   public class PaginatedAccessLogsDto : PaginatedResponseDto<UserAccessLogDto> { }
 
   public class PaginatedResponseDto<T> {
-    [Required] public int count => data.Count;
-    [Required] public List<T> data { get; set; }
-    [Required] public int pages { get; set; }
-    [Required] public int page { get; set; }
+    [Required] public int Count => Data.Count;
+    [Required] public List<T> Data { get; set; }
+    [Required] public int Pages { get; set; }
+    [Required] public int Page { get; set; }
   }
 
   public class UserAccessLogDto {

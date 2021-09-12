@@ -10,7 +10,7 @@ namespace Api.Repositories {
   public class UserAccessLogRepository : IUserAccessLogRepository {
     private readonly MainDataConnection db;
 
-    private readonly int pageSize = 10;
+    private const int PageSize = 10;
 
     public UserAccessLogRepository(MainDataConnection db) {
       this.db = db;
@@ -28,7 +28,7 @@ namespace Api.Repositories {
               orderby logs.CreatedAt descending
               select logs;
 
-      return query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+      return query.Skip((page - 1) * PageSize).Take(PageSize).ToListAsync();
     }
 
 
@@ -41,7 +41,7 @@ namespace Api.Repositories {
       var query = GetUserAccessLogsQuery(userId, createdAtFrom, createdAtTo, lockId);
       var count = await query.CountAsync();
 
-      var pages = (decimal)count / (decimal)pageSize;
+      var pages = (decimal)count / (decimal)PageSize;
 
       return (int)Math.Ceiling(pages);
     }

@@ -30,12 +30,12 @@ namespace IntegTests.Controllers {
     }
   }
 
-  public class AuthControllerTests : IClassFixture<WebApplicationFactory<Api.Startup>>, IClassFixture<AuthControllerSetupFixture> {
+  public class AuthControllerTests : IClassFixture<WebApplicationFactory<Startup>>,
+    IClassFixture<AuthControllerSetupFixture> {
     private readonly WebApplicationFactory<Startup> factory;
 
     public AuthControllerTests(
-      WebApplicationFactory<Api.Startup> factory,
-      AuthControllerSetupFixture setup
+      WebApplicationFactory<Startup> factory
     ) {
       this.factory = factory;
     }
@@ -43,10 +43,12 @@ namespace IntegTests.Controllers {
     [Fact]
     public async Task Login_WhenInvalidCredentials_Returns401() {
       var client = factory.CreateClient();
-      var requestBody = Json.SerializeRequest(new {
-        Password = "invalid password",
-        Username = "Auth Test User 1"
-      });
+      var requestBody = Json.SerializeRequest(
+        new {
+          Password = "invalid password",
+          Username = "Auth Test User 1"
+        }
+      );
 
       var response = await client.PostAsync("api/auth/login", requestBody);
 
@@ -58,10 +60,12 @@ namespace IntegTests.Controllers {
     [Fact]
     public async Task Login_WhenValidCredentials_ReturnsToken() {
       var client = factory.CreateClient();
-      var requestBody = Json.SerializeRequest(new {
-        Password = "12345",
-        Username = "Auth Test User 1"
-      });
+      var requestBody = Json.SerializeRequest(
+        new {
+          Password = "12345",
+          Username = "Auth Test User 1"
+        }
+      );
 
       var response = await client.PostAsync("api/auth/login", requestBody);
 

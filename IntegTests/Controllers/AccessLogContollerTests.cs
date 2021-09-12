@@ -15,64 +15,70 @@ using IntegTests.Tools;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace IntegTests.Controllers {
   public class AccessLogControllerSetupFixture : IDisposable {
     private readonly MainDataConnection db = Database.GetConnection();
 
-    public User user = new User {
+    public readonly User User = new() {
       Username = "Access Log Test User 1",
       Password = new LoginRequestDto { Password = "12345" }.Password
     };
-    public Tag tag = new Tag { Name = "Access Log Test Tag 1" };
-    public Lock _lock = new Lock { Name = "Access Log Test Lock 1" };
-    public List<UserAccessLog> logs = new();
+
+    public readonly Tag Tag = new() { Name = "Access Log Test Tag 1" };
+    public readonly Lock Lock = new() { Name = "Access Log Test Lock 1" };
+    public readonly List<UserAccessLog> Logs = new();
 
     public AccessLogControllerSetupFixture() {
       var logsIds = (from logs in db.UsersAccessLogs
-                     join users in db.Users on logs.UserId equals users.Id
-                     select logs.Id).ToHashSet();
+        join users in db.Users on logs.UserId equals users.Id
+        where users.Username == User.Username
+        select logs.Id).ToHashSet();
       db.UsersAccessLogs.Where(it => logsIds.Contains(it.Id)).Delete();
-      db.Users.Where(it => it.Username == user.Username).Delete();
-      db.Tags.Where(it => it.Name == tag.Name).Delete();
-      db.Locks.Where(it => it.Name == _lock.Name).Delete();
+      db.Users.Where(it => it.Username == User.Username).Delete();
+      db.Tags.Where(it => it.Name == Tag.Name).Delete();
+      db.Locks.Where(it => it.Name == Lock.Name).Delete();
 
-      user.TagId = tag.Id = db.InsertWithInt32Identity(tag);
-      _lock.Id = db.InsertWithInt32Identity(_lock);
-      user.Id = db.InsertWithInt32Identity(user);
-      db.Insert(new Access { LockId = _lock.Id, TagId = tag.Id });
+      User.TagId = Tag.Id = db.InsertWithInt32Identity(Tag);
+      Lock.Id = db.InsertWithInt32Identity(Lock);
+      User.Id = db.InsertWithInt32Identity(User);
+      db.Insert(new Access { LockId = Lock.Id, TagId = Tag.Id });
       for (var i = 0; i < 3; i++) {
-        var log = new UserAccessLog { UserId = user.Id, LockId = _lock.Id };
+        var log = new UserAccessLog { UserId = User.Id, LockId = Lock.Id };
         log.Id = db.InsertWithInt32Identity(log);
-        logs.Add(log);
+        Logs.Add(log);
       }
     }
 
     public void Dispose() {
-      db.UsersAccessLogs.Where(it => it.UserId == user.Id).Delete();
-      db.Delete(user);
-      db.Delete(tag);
-      db.Delete(_lock);
+      db.UsersAccessLogs.Where(it => it.UserId == User.Id).Delete();
+      db.Delete(User);
+      db.Delete(Tag);
+      db.Delete(Lock);
       db.Close();
     }
   }
 
-
-  public class AccessLogControllerTests : IClassFixture<WebApplicationFactory<Api.Startup>>, IClassFixture<AccessLogControllerSetupFixture> {
+  public class AccessLogControllerTests : IClassFixture<WebApplicationFactory<Startup>>,
+    IClassFixture<AccessLogControllerSetupFixture> {
     private readonly WebApplicationFactory<Startup> factory;
     private readonly AccessLogControllerSetupFixture setup;
+    private readonly ITestOutputHelper testOutputHelper;
+
     public AccessLogControllerTests(
-      WebApplicationFactory<Api.Startup> factory,
-      AccessLogControllerSetupFixture setup
+      WebApplicationFactory<Startup> factory,
+      AccessLogControllerSetupFixture setup, ITestOutputHelper testOutputHelper
     ) {
       this.factory = factory;
       this.setup = setup;
+      this.testOutputHelper = testOutputHelper;
     }
 
     [Fact]
     public async Task Get_ReturnsUserLogs() {
       var client = factory.CreateClient();
-      var token = new JwtIssuer(Config.GetInstance()).WriteToken(setup.user);
+      var token = new JwtIssuer(Config.GetInstance()).WriteToken(setup.User);
       var msg = new HttpRequestMessage(HttpMethod.Get, "api/access-logs");
       msg.Headers.Add("Authorization", $"Bearer {token}");
 
@@ -81,14 +87,32 @@ namespace IntegTests.Controllers {
       response.EnsureSuccessStatusCode();
       var responseBody = await Json.DeserializeResponse<PaginatedAccessLogsDto>(response);
       var expected = new PaginatedAccessLogsDto {
-        data = setup.logs.ConvertAll(item => item.ToUserAccessLogDto()),
-        page = 1,
-        pages = 1
+        Data = setup.Logs.ConvertAll(item => item.ToUserAccessLogDto()),
+        Page = 1,
+        Pages = 1
       };
-      responseBody.Should().BeEquivalentTo(expected, options => 
-        options 
-          .Using<DateTimeOffset>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, 5.Seconds()))
-          .WhenTypeIs<DateTimeOffset>()
+      var db = Database.GetConnection();
+      var users1 = (from users in db.Users
+        select users).ToList();
+      var tags1 = (from tags in db.Tags
+        select tags).ToList();
+      var access1 = (from access in db.Access
+        select access).ToList();
+      var locks1 = (from locks in db.Locks
+        select locks).ToList();
+      var userAccessLogs1 = (from userAccessLogs in db.UsersAccessLogs
+        select userAccessLogs).ToList();
+      testOutputHelper.WriteLine($"Users: {Json.Serialize(users1)}");
+      testOutputHelper.WriteLine($"Tags: {Json.Serialize(tags1)}");
+      testOutputHelper.WriteLine($"Access: {Json.Serialize(access1)}");
+      testOutputHelper.WriteLine($"Locks: {Json.Serialize(locks1)}");
+      testOutputHelper.WriteLine($"Logs: {Json.Serialize(userAccessLogs1)}");
+
+      responseBody.Should().BeEquivalentTo(
+        expected, options =>
+          options
+            .Using<DateTimeOffset>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, 5.Seconds()))
+            .WhenTypeIs<DateTimeOffset>()
       );
     }
   }

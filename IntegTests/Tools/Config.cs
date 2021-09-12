@@ -4,11 +4,11 @@ using Microsoft.Extensions.Configuration;
 
 namespace IntegTests.Tools {
   public static class Config {
-    private static readonly object _lock = new();
+    private static readonly object Lock = new();
     private static IConfiguration config;
 
     public static IConfiguration GetInstance() {
-      lock (_lock) {
+      lock (Lock) {
         if (config is null) {
           config = new ConfigurationBuilder()
             .SetBasePath(Directory.GetParent(AppContext.BaseDirectory).FullName)

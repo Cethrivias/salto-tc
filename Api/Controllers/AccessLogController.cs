@@ -38,9 +38,9 @@ namespace Api.Controllers {
       var pages = await userAccessLogRepository.GetUserAccessLogsPages(userId, createdAtFrom, createdAtTo, lockId);
 
       var response = new PaginatedAccessLogsDto {
-        data = logs.Select(it => it.ToUserAccessLogDto()).ToList(),
-        page = page,
-        pages = pages
+        Data = logs.Select(it => it.ToUserAccessLogDto()).ToList(),
+        Page = page,
+        Pages = pages
       };
 
       return Ok(response);
