@@ -6,8 +6,8 @@ services:
   api:
     image: api
     build:
-      context: Api
-      dockerfile: Dockerfile
+      context: src
+      dockerfile: Api/Dockerfile
     depends_on: 
       - database
     ports:
