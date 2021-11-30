@@ -4,24 +4,27 @@ using System.Threading.Tasks;
 using Api.Models.Dtos;
 using Api.Utils;
 using Api.Utils.Extensions;
-using Application.Services;
+using Application.Mediatr.UserAccessLog;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Api.Controllers {
-
+namespace Api.Controllers
+{
   [ApiController]
   [Route("api/access-logs")]
   [Produces("application/json")]
   [Authorize]
-  public class AccessLogController : ControllerBase {
-    private readonly IUserAccessLogService userAccessLogService;
-    private readonly IUserProvider userProvider;
+  public class AccessLogController : ControllerBase
+  {
+    private readonly IUserProvider _userProvider;
+    private readonly IMediator _mediator;
 
-    public AccessLogController(IUserAccessLogService userAccessLogService, IUserProvider userProvider) {
-      this.userAccessLogService = userAccessLogService;
-      this.userProvider = userProvider;
+    public AccessLogController(IUserProvider userProvider, IMediator mediator)
+    {
+      _userProvider = userProvider;
+      _mediator = mediator;
     }
 
     [HttpGet]
@@ -31,16 +34,26 @@ namespace Api.Controllers {
       [FromQuery(Name = "from")] DateTimeOffset? createdAtFrom = null,
       [FromQuery(Name = "to")] DateTimeOffset? createdAtTo = null,
       [FromQuery] int? lockId = null
-    ) {
-      var userId = userProvider.UserId;
+    )
+    {
+      var userId = _userProvider.UserId;
 
-      var logs = await userAccessLogService.GetUserAccessLogs(userId, page, createdAtFrom, createdAtTo, lockId);
-      var pages = await userAccessLogService.GetUserAccessLogsPages(userId, createdAtFrom, createdAtTo, lockId);
-
-      var response = new PaginatedAccessLogsDto {
-        Data = logs.Select(it => it.ToUserAccessLogDto()).ToList(),
+      var query = new GetUserAccessLogsQuery
+      {
         Page = page,
-        Pages = pages
+        LockId = lockId,
+        UserId = userId,
+        CreatedAtFrom = createdAtFrom,
+        CreatedAtTo = createdAtTo
+      };
+
+      var paginatedUserAccessLog = await _mediator.Send(query);
+
+      var response = new PaginatedAccessLogsDto
+      {
+        Data = paginatedUserAccessLog.Data.Select(it => it.ToUserAccessLogDto()).ToList(),
+        Page = paginatedUserAccessLog.Page,
+        Pages = paginatedUserAccessLog.Pages
       };
 
       return Ok(response);

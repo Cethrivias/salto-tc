@@ -1,141 +1,96 @@
 using System.Collections.Generic;
+using System.Threading;
 using Api.Controllers;
 using Api.Models.Dtos;
 using Api.Utils;
 using Api.Utils.Extensions;
-using Application.Core;
-using Application.Services;
+using Application.Mediatr.Lock;
 using Domain.Models;
 using FluentAssertions;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
 
-namespace Api.UnitTests.Controllers {
-  public class LockControllerTests {
-    [Fact]
-    public async void Get_ReturnsListOfLocks() {
-      var lockOpenerMock = new Mock<ILockOpener>();
-      var lockServiceMock = new Mock<ILockService>();
-      var userServiceMock = new Mock<IUserService>();
-      var userAccessLogServiceMock = new Mock<IUserAccessLogService>();
-      var userProviderMock = new Mock<IUserProvider>();
+namespace Api.UnitTests.Controllers
+{
+  public class LockControllerTests
+  {
+    private readonly LockController _sut;
+    private readonly Mock<IUserProvider> _userProvider;
+    private readonly Mock<IMediator> _mediator;
 
-      var _lock = new Lock {
+    public LockControllerTests()
+    {
+      _userProvider = new Mock<IUserProvider>();
+      _mediator = new Mock<IMediator>();
+      _sut = new LockController(_userProvider.Object, _mediator.Object);
+    }
+
+    [Fact]
+    public async void Get_ReturnsListOfLocks()
+    {
+      var _lock = new Lock
+      {
         Id = 1,
         Name = "Tunnel"
       };
 
-      lockServiceMock.Setup(repo => repo.GetAccessibleByUser(It.IsAny<int>())).ReturnsAsync(new List<Lock> { _lock });
-      userProviderMock.Setup(provider => provider.UserId).Returns(1);
+      _mediator.Setup(mediator => mediator.Send(It.IsAny<GetLocksQuery>(), It.IsAny<CancellationToken>()))
+        .ReturnsAsync(new List<Lock> { _lock });
+      _userProvider.Setup(provider => provider.UserId).Returns(1);
 
-      var lockController = new LockController(
-        lockOpenerMock.Object,
-        lockServiceMock.Object,
-        userServiceMock.Object,
-        userAccessLogServiceMock.Object,
-        userProviderMock.Object
-      );
+      var response = await _sut.Get();
 
-      var response = await lockController.Get();
       var value = response.GetObjectResult();
 
       value.Should().BeEquivalentTo(new List<LockDto> { _lock.ToLockDto() });
     }
 
     [Fact]
-    public async void GetById_WhenUserHasAccess_ReturnsLock() {
-      var lockOpenerMock = new Mock<ILockOpener>();
-      var lockServiceMock = new Mock<ILockService>();
-      var userServiceMock = new Mock<IUserService>();
-      var userAccessLogServiceMock = new Mock<IUserAccessLogService>();
-      var userProviderMock = new Mock<IUserProvider>();
-
-      var _lock = new Lock {
+    public async void GetById_WhenUserHasAccess_ReturnsLock()
+    {
+      var _lock = new Lock
+      {
         Id = 1,
         Name = "Tunnel"
       };
 
-      lockServiceMock.Setup(
-        repo => repo.GetAccessibleByUser(It.IsAny<int>(), It.Is<int>(lockId => lockId == _lock.Id))
-      ).ReturnsAsync(_lock);
-      userProviderMock.Setup(provider => provider.UserId).Returns(1);
+      _mediator.Setup(mediator => mediator.Send(It.IsAny<GetLockQuery>(), It.IsAny<CancellationToken>()))
+        .ReturnsAsync(_lock);
+      _userProvider.Setup(provider => provider.UserId).Returns(1);
 
-      var lockController = new LockController(
-        lockOpenerMock.Object,
-        lockServiceMock.Object,
-        userServiceMock.Object,
-        userAccessLogServiceMock.Object,
-        userProviderMock.Object
-      );
-
-      var response = await lockController.GetById(_lock.Id);
+      var response = await _sut.GetById(_lock.Id);
       var value = response.GetObjectResult();
 
       value.Should().BeEquivalentTo(_lock.ToLockDto());
     }
 
     [Fact]
-    public async void GetById_WhenUserDoesNotHaveAccess_Returns403() {
-      var lockOpenerMock = new Mock<ILockOpener>();
-      var lockServiceMock = new Mock<ILockService>();
-      var userServiceMock = new Mock<IUserService>();
-      var userAccessLogServiceMock = new Mock<IUserAccessLogService>();
-      var userProviderMock = new Mock<IUserProvider>();
+    public async void GetById_WhenUserDoesNotHaveAccess_Returns403()
+    {
+      _mediator.Setup(x => x.Send(It.IsAny<GetLockQuery>(), It.IsAny<CancellationToken>())).ReturnsAsync((Lock) null);
+      _userProvider.Setup(provider => provider.UserId).Returns(1);
 
-      lockServiceMock.Setup(
-        repo => repo.GetAccessibleByUser(It.IsAny<int>(), It.IsAny<int>())
-      ).ReturnsAsync((Lock)null);
-      userProviderMock.Setup(provider => provider.UserId).Returns(1);
-
-      var lockController = new LockController(
-        lockOpenerMock.Object,
-        lockServiceMock.Object,
-        userServiceMock.Object,
-        userAccessLogServiceMock.Object,
-        userProviderMock.Object
-      );
-
-      var response = await lockController.GetById(1);
+      var response = await _sut.GetById(1);
 
       response.Result.Should().BeOfType<ForbidResult>();
     }
 
     [Fact]
-    public async void Open_WhenUserHasAccess_OpensLock() {
-      var lockOpenerMock = new Mock<ILockOpener>();
-      var lockServiceMock = new Mock<ILockService>();
-      var userServiceMock = new Mock<IUserService>();
-      var userAccessLogServiceMock = new Mock<IUserAccessLogService>();
-      var userProviderMock = new Mock<IUserProvider>();
-
-      var userAccessLog = new UserAccessLog {
+    public async void Open_WhenUserHasAccess_OpensLock()
+    {
+      var userAccessLog = new UserAccessLog
+      {
         LockId = 1,
         UserId = 2,
         Id = 3,
       };
+      
+      _mediator.Setup(x => x.Send(It.IsAny<OpenLockCommand>(), It.IsAny<CancellationToken>())).ReturnsAsync(userAccessLog);
+      _userProvider.Setup(provider => provider.UserId).Returns(userAccessLog.UserId);
 
-      userServiceMock.Setup(
-        repo => repo.HasAccess(
-          It.Is<int>(it => it == userAccessLog.UserId),
-          It.Is<int>(it => it == userAccessLog.LockId)
-        )
-      ).ReturnsAsync(true);
-      userAccessLogServiceMock.Setup(repo => repo.LogUserAccess(
-        It.Is<int>(it => it == userAccessLog.UserId),
-        It.Is<int>(it => it == userAccessLog.LockId)
-      )).ReturnsAsync(userAccessLog);
-      userProviderMock.Setup(provider => provider.UserId).Returns(userAccessLog.UserId);
-
-      var lockController = new LockController(
-        lockOpenerMock.Object,
-        lockServiceMock.Object,
-        userServiceMock.Object,
-        userAccessLogServiceMock.Object,
-        userProviderMock.Object
-      );
-
-      var response = await lockController.Open(userAccessLog.LockId);
+      var response = await _sut.Open(userAccessLog.LockId);
 
       response.Result.Should().BeOfType<OkObjectResult>();
       var value = response.GetObjectResult();
@@ -143,41 +98,21 @@ namespace Api.UnitTests.Controllers {
     }
 
     [Fact]
-    public async void Open_WhenUserDoesNotHaveAccess_Returns403() {
-      var lockOpenerMock = new Mock<ILockOpener>();
-      var lockServiceMock = new Mock<ILockService>();
-      var userServiceMock = new Mock<IUserService>();
-      var userAccessLogServiceMock = new Mock<IUserAccessLogService>();
-      var userProviderMock = new Mock<IUserProvider>();
+    public async void Open_WhenUserDoesNotHaveAccess_Returns403()
+    {
 
-      var userAccessLog = new UserAccessLog {
+      var userAccessLog = new UserAccessLog
+      {
         LockId = 1,
         UserId = 2,
         Id = 3,
       };
 
-      userServiceMock.Setup(
-        repo => repo.HasAccess(
-          It.Is<int>(it => it == userAccessLog.UserId),
-          It.Is<int>(it => it == userAccessLog.LockId)
-        )
-      ).ReturnsAsync(false);
-      userProviderMock.Setup(provider => provider.UserId).Returns(userAccessLog.UserId);
+      _mediator.Setup(x => x.Send(It.IsAny<OpenLockCommand>(), It.IsAny<CancellationToken>()))
+        .ReturnsAsync((UserAccessLog) null);
+      _userProvider.Setup(provider => provider.UserId).Returns(userAccessLog.UserId);
 
-      var lockController = new LockController(
-        lockOpenerMock.Object,
-        lockServiceMock.Object,
-        userServiceMock.Object,
-        userAccessLogServiceMock.Object,
-        userProviderMock.Object
-      );
-
-      var response = await lockController.Open(userAccessLog.LockId);
-
-      userAccessLogServiceMock.Verify(
-        repo => repo.LogUserAccess(It.IsAny<int>(), It.IsAny<int>()),
-        Times.Never
-      );
+      var response = await _sut.Open(userAccessLog.LockId);
       response.Result.Should().BeOfType<ForbidResult>();
     }
   }

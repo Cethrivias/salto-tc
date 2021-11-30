@@ -6,6 +6,11 @@
 
   <ItemGroup>
     <Folder Include="Common" />
+    <Folder Include="Queries" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="9.0.0" />
   </ItemGroup>
 
   <PropertyGroup>

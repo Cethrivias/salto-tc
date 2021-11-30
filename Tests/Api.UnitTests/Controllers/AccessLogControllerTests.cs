@@ -1,50 +1,55 @@
-using System;
-using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using Api.Controllers;
 using Api.Models.Dtos;
 using Api.Utils;
 using Api.Utils.Extensions;
-using Application.Services;
+using Application.Mediatr.UserAccessLog;
+using Application.Models;
 using Domain.Models;
 using FluentAssertions;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
 
-namespace Api.UnitTests.Controllers {
-  public class AccessLogControllerTests {
+namespace Api.UnitTests.Controllers
+{
+  public class AccessLogControllerTests
+  {
+    private readonly Mock<IMediator> _mediator;
+    private readonly Mock<IUserProvider> _userProvider;
+    private readonly AccessLogController _sut;
+
+    public AccessLogControllerTests()
+    {
+      _mediator = new Mock<IMediator>();
+      _userProvider = new Mock<IUserProvider>();
+      _sut = new AccessLogController(_userProvider.Object, _mediator.Object);
+    }
+
     [Fact]
-    public async void Get_ReturnsPaginatedAccessLogs() {
-      var userAccessLogServiceMock = new Mock<IUserAccessLogService>();
-      var userProviderMock = new Mock<IUserProvider>();
-      var userAccessLog = new UserAccessLog();
-      var pages = 1;
+    public async void Get_ReturnsPaginatedAccessLogs()
+    {
+      var paginatedResponse = new PaginatedResponse<UserAccessLog>
+      {
+        Data = new[] { new UserAccessLog() },
+        Page = 1,
+        Pages = 1
+      };
+      _mediator.Setup(x => x.Send(It.IsAny<GetUserAccessLogsQuery>(), It.IsAny<CancellationToken>()))
+        .ReturnsAsync(paginatedResponse);
+      _userProvider.Setup(provider => provider.UserId).Returns(1);
 
-      userAccessLogServiceMock.Setup(repo => repo.GetUserAccessLogs(
-        It.IsAny<int>(),
-        It.IsAny<int>(),
-        It.IsAny<DateTimeOffset?>(),
-        It.IsAny<DateTimeOffset?>(),
-        It.IsAny<int?>()
-      )).ReturnsAsync(new List<UserAccessLog> { userAccessLog });
-      userAccessLogServiceMock.Setup(repo => repo.GetUserAccessLogsPages(
-        It.IsAny<int>(),
-        It.IsAny<DateTimeOffset?>(),
-        It.IsAny<DateTimeOffset?>(),
-        It.IsAny<int?>()
-      )).ReturnsAsync(pages);
-      userProviderMock.Setup(provider => provider.UserId).Returns(1);
-
-      var controller = new AccessLogController(userAccessLogServiceMock.Object, userProviderMock.Object);
-
-      var response = await controller.Get();
+      var response = await _sut.Get();
 
       response.Result.Should().BeOfType<OkObjectResult>();
       var value = response.GetObjectResult();
-      var expected = new PaginatedAccessLogsDto {
-        Data = new List<UserAccessLogDto> { userAccessLog.ToUserAccessLogDto() },
-        Page = 1,
-        Pages = pages
+      var expected = new PaginatedAccessLogsDto
+      {
+        Data = paginatedResponse.Data.Select(it => it.ToUserAccessLogDto()).ToList(),
+        Page = paginatedResponse.Page,
+        Pages = paginatedResponse.Pages
       };
       value.Should().BeEquivalentTo(expected);
     }

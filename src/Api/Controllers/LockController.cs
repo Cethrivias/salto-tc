@@ -4,8 +4,8 @@ using System.Threading.Tasks;
 using Api.Models.Dtos;
 using Api.Utils;
 using Api.Utils.Extensions;
-using Application.Core;
-using Application.Services;
+using Application.Mediatr.Lock;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -17,32 +17,28 @@ namespace Api.Controllers {
   [Produces("application/json")]
   [Authorize]
   public class LockController : ControllerBase {
-    private readonly IUserService userService;
-    private readonly IUserAccessLogService userAccessLogService;
-    private readonly ILockOpener lockOpener;
-    private readonly ILockService lockService;
-    private readonly IUserProvider userProvider;
+    private readonly IUserProvider _userProvider;
+
+    private readonly IMediator _mediator;
 
     public LockController(
-      ILockOpener lockOpener,
-      ILockService lockService,
-      IUserService userService,
-      IUserAccessLogService userAccessLogService,
-      IUserProvider userProvider
+      IUserProvider userProvider,
+      IMediator mediator
     ) {
-      this.userService = userService;
-      this.userAccessLogService = userAccessLogService;
-      this.lockOpener = lockOpener;
-      this.lockService = lockService;
-      this.userProvider = userProvider;
+      _userProvider = userProvider;
+      _mediator = mediator;
     }
 
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult<List<LockDto>>> Get() {
-      var userId = userProvider.UserId;
+      var userId = _userProvider.UserId;
+      var query = new GetLocksQuery
+      {
+        UserId = userId
+      };
 
-      var locks = await lockService.GetAccessibleByUser(userId);
+      var locks = await _mediator.Send(query);
 
       return Ok(locks.Select(it => it.ToLockDto()).ToList());
     }
@@ -51,9 +47,16 @@ namespace Api.Controllers {
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<LockDto>> GetById([FromRoute(Name = "id")] int lockId) {
-      var userId = userProvider.UserId;
+      var userId = _userProvider.UserId;
 
-      var item = await lockService.GetAccessibleByUser(userId, lockId);
+      var query = new GetLockQuery
+      {
+        LockId = lockId,
+        UserId = userId
+      };
+
+      var item = await _mediator.Send(query);
+      
       if (item is null) {
         return Forbid();
       }
@@ -65,17 +68,21 @@ namespace Api.Controllers {
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<UserAccessLogDto>> Open([FromRoute(Name = "id")] int lockId) {
-      var userId = userProvider.UserId;
+      var userId = _userProvider.UserId;
 
-      var hasAccess = await userService.HasAccess(userId, lockId);
+      var command = new OpenLockCommand
+      {
+        LockId = lockId,
+        UserId = userId
+      };
 
-      if (hasAccess) {
-        await lockOpener.Open(lockId);
-        var userAccessLog = await userAccessLogService.LogUserAccess(userId, lockId);
-        return Ok(userAccessLog.ToUserAccessLogDto());
-      } else {
+      var userAccessLog = await _mediator.Send(command);
+
+      if (userAccessLog is null) {
         return Forbid();
       }
+
+      return Ok(userAccessLog.ToUserAccessLogDto());
     }
   }
 }
